@@ -3,26 +3,13 @@ from protobuf.messages_robocup_ssl_wrapper_pb2 import SSL_WrapperPacket
 from protobuf.grSim_Packet_pb2 import grSim_Packet
 from protobuf_to_dict import protobuf_to_dict
 from grSimPacket import GRSimPacket, RobotCommand
+from struct import pack
+
 
 DEFAULT_COMMAND_PORT = 20011
 TOTAL_ROBOTS_COUNT = 11
 
 class SSLClient:
-    def __enter__(self):
-        """Binds the client with ip and port and configure to UDP multicast."""
-        
-        self.sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM, socket.IPPROTO_UDP)
-        self.sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-        self.sock.setsockopt(socket.IPPROTO_IP, socket.IP_MULTICAST_TTL, 128)
-        self.sock.setsockopt(socket.IPPROTO_IP, socket.IP_MULTICAST_LOOP, 1)
-        self.sock.bind((self.ip, self.port))
-
-        host = socket.gethostbyname(socket.gethostname())
-        self.sock.setsockopt(socket.SOL_IP, socket.IP_MULTICAST_IF, socket.inet_aton(host))
-        #self.sock.setsockopt(socket.SOL_IP, socket.IP_ADD_MEMBERSHIP, 
-        #        socket.inet_aton(self.ip) + socket.inet_aton(host))
-        return self
-
     def __init__(self,  ip = '224.5.23.2', port=10006):
         """
         Init SSLClient object.
@@ -41,6 +28,23 @@ class SSLClient:
         self.ip = ip
         self.port = port
 
+    def __enter__(self):
+        """Binds the client with ip and port and configure to UDP multicast."""
+        
+        self.sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM, socket.IPPROTO_UDP)
+        self.sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+        self.sock.setsockopt(socket.IPPROTO_IP, socket.IP_MULTICAST_TTL, 128)
+        self.sock.setsockopt(socket.IPPROTO_IP, socket.IP_MULTICAST_LOOP, 1)
+        self.sock.bind((self.ip, self.port))
+
+        host = socket.gethostbyname(socket.gethostname())
+        self.sock.setsockopt(socket.SOL_IP, socket.IP_MULTICAST_IF, socket.inet_aton(host))
+        # TODO: Currently multicast is disabled as main.py uses 127.0.0.1 address instead of 224.0.0.0 and above
+        # Not sure about the difference, but multicast sounds more fancy
+        # self.sock.setsockopt(socket.SOL_IP, socket.IP_ADD_MEMBERSHIP, 
+        #        socket.inet_aton(self.ip) + socket.inet_aton(host))
+        return self
+
     def __exit__(self,  exc_type, exc_value, exc_tb):
         stopCommands = [RobotCommand(i, 0.0, 0.0, 0.0) for i in range(TOTAL_ROBOTS_COUNT)]
         desiredCommand = GRSimPacket(0.0, False, stopCommands)
@@ -51,11 +55,14 @@ class SSLClient:
     def receive(self):
         """Receive package and decode."""
         wrapper_packet = SSL_WrapperPacket()
-        data, _ = self.sock.recvfrom(1024)
+        data, len = self.sock.recvfrom(1024)
         try:
             wrapper_packet.ParseFromString(data)
         except Exception as e:
-            print(e)
+            # TODO: Debug error message : Error parsing message with type 'SSL_WrapperPacket'
+            # Only minor concern as we can still get geometry packet, but its annoying
+            ...
+            #print(e)
         wrapper_packet = protobuf_to_dict(wrapper_packet)
         return wrapper_packet
 
