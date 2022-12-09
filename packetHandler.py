@@ -27,11 +27,11 @@ class PacketHandler:
                 destRobotState.y = robotState['y']
                 destRobotState.yaw = robotState['orientation']
         # TODO: Shoiuld take into account the possibility of having multiple balls
-        balls = packet.get("balls")[0]
+        balls = packet.get("balls")
         if balls:
-            self.strategyInfo.ballInfo.x = balls['x']
-            self.strategyInfo.ballInfo.y = balls['y']
-            self.strategyInfo.ballInfo.confidence = balls['confidence']
+            self.strategyInfo.ballInfo.x = balls[0]['x']
+            self.strategyInfo.ballInfo.y = balls[0]['y']
+            self.strategyInfo.ballInfo.confidence = balls[0]['confidence']
         yellowRobotStates = packet.get("robots_yellow")
         if yellowRobotStates:
             copyRobotState(yellowRobotStates, self.strategyInfo.yellowRobotStates)
