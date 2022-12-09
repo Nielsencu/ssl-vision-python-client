@@ -13,15 +13,11 @@ if __name__ == "__main__":
         packetHandler = PacketHandler(strategyInfo)
         while True:
             if sys.argv[1] == 'send':
-                robotCommands = []
-                robotCommands.append(RobotCommand(0, -0.1, 0.0, 0.0))
-                desiredCommand = GRSimPacket(0.0, True, robotCommands)
-                client.send(desiredCommand)
-                desiredCommand = GRSimPacket(0.0, False, robotCommands)
-                client.send(desiredCommand)
+                client.moveBlueRobot(3, 0.1, 0.0, 0.0)
+                client.moveYellowRobot(3, 0.1, 0.0, 0.0)
             else:
+                # This will run on a separate thread on the real application
                 packet = client.receive()
-                # Packet handler will update strategyInfo on handle
                 packetHandler.handle(packet)
                 print(f'{strategyInfo}')
 

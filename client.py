@@ -27,6 +27,10 @@ class SSLClient:
             raise ValueError('Port type should be int type')
         self.ip = ip
         self.port = port
+        self.yellowRobotCommands = [RobotCommand(i, 0.0, 0.0, 0.0) for i in range(TOTAL_ROBOTS_COUNT)]
+        self.yellowCommandPacket = GRSimPacket(0.0, True, self.yellowRobotCommands)
+        self.blueRobotCommands = [RobotCommand(i, 0.0, 0.0, 0.0) for i in range(TOTAL_ROBOTS_COUNT)]
+        self.blueCommandPacket = GRSimPacket(0.0, False, self.blueRobotCommands)
 
     def __enter__(self):
         """Binds the client with ip and port and configure to UDP multicast."""
@@ -87,3 +91,17 @@ class SSLClient:
             command.wheel3 = robotCommand.wheel3
             command.wheel4 = robotCommand.wheel4
         return self.sock.sendto(grsimPacket.SerializeToString(), (self.ip, DEFAULT_COMMAND_PORT))
+
+    def moveBlueRobot(self, id : int, velX : float, velY : float, yaw : float):
+        cmd = self.blueRobotCommands[id]
+        cmd.velX = velX
+        cmd.velY = velY
+        cmd.yaw = yaw
+        self.send(self.blueCommandPacket)
+    
+    def moveYellowRobot(self, id : int, velX : float, velY : float, yaw : float):
+        cmd = self.yellowRobotCommands[id]
+        cmd.velX = velX
+        cmd.velY = velY
+        cmd.yaw = yaw
+        self.send(self.yellowCommandPacket)
